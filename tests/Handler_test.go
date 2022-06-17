@@ -1,0 +1,106 @@
+package tests
+
+import (
+	"errors"
+	"fmt"
+	"github.com/dyntek-services-inc/goconfigure/inventory"
+	"github.com/dyntek-services-inc/goconfigure/render"
+	"github.com/dyntek-services-inc/goconfigure/ssh"
+	"strings"
+	"testing"
+)
+
+func TestConnectHandler(t *testing.T) {
+	inv, err := inventory.LoadInventory("secrets/hosts.yml")
+	if err != nil {
+		panic(err)
+	}
+	// Connect to Hosts
+	var handlers []*ssh.Handler
+	for name, host := range inv {
+		t.Logf("Connectiong to %s", name)
+		h, err := ssh.Connect(host)
+		handlers = append(handlers, h)
+		if err != nil {
+			panic(err)
+		}
+	}
+	// Cleanup
+	for _, h := range handlers {
+		h.Close()
+	}
+}
+
+func TestSendHandler(t *testing.T) {
+	inv, err := inventory.LoadInventory("secrets/hosts.yml")
+	if err != nil {
+		panic(err)
+	}
+	// Connect to Hosts
+	var handlers []*ssh.Handler
+	for name, host := range inv {
+		t.Logf("Connectiong to %s", name)
+		h, err := ssh.Connect(host)
+		handlers = append(handlers, h)
+		if err != nil {
+			panic(err)
+		}
+	}
+	// Send Command to Host
+	for _, h := range handlers {
+		response, err := h.Send("echo \"hello world!\"")
+		if err != nil {
+			panic(err)
+		}
+		response = strings.TrimSpace(response)
+		if response != "hello world!" {
+			panic(errors.New(fmt.Sprintf("response %s not equal to %s", response, "hello world!")))
+		} else {
+			t.Logf("response %s succesfully matches %s", response, "hello world!")
+		}
+	}
+	// Cleanup
+	for _, h := range handlers {
+		h.Close()
+	}
+}
+
+func TestMultiSendHandler(t *testing.T) {
+	inv, err := inventory.LoadInventory("secrets/hosts.yml")
+	tplString, err := render.FileToString("secrets/example.txt")
+	if err != nil {
+		panic(err)
+	}
+	// Connect to Hosts and Render Template
+	var handlers []*ssh.Handler
+	var tpls [][]string
+	for name, host := range inv {
+		t.Logf("Connectiong to %s", name)
+		h, err := ssh.Connect(host)
+		if err != nil {
+			panic(err)
+		}
+		handlers = append(handlers, h)
+		tpls = append(tpls, render.RenderCommands(host.Data, tplString))
+	}
+	// Send Commands to Host
+	for i, h := range handlers {
+		for _, command := range tpls[i] {
+			response, err := h.Send(command)
+			if err != nil {
+				panic(err)
+			}
+			response = strings.TrimSpace(response)
+			fmt.Println(response)
+		}
+		//if response != "hello world!" {
+		//	panic(errors.New(fmt.Sprintf("response %s not equal to %s", response, "hello world!")))
+		//} else {
+		//	t.Logf("response %s succesfully matches %s", response, "hello world!")
+		//}
+	}
+	// Cleanup
+	for _, h := range handlers {
+		h.Close()
+	}
+}
