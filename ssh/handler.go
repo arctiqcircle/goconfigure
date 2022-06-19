@@ -2,32 +2,26 @@ package ssh
 
 import (
 	"bytes"
-	"github.com/dyntek-services-inc/goconfigure/inventory"
 	"golang.org/x/crypto/ssh"
 )
 
 type Handler struct {
-	host   inventory.Host
 	client *ssh.Client
 }
 
-func Connect(host inventory.Host) (*Handler, error) {
+func Connect(hostname, username, password string) (*Handler, error) {
 	config := &ssh.ClientConfig{
-		User: host.Username,
+		User: username,
 		Auth: []ssh.AuthMethod{
-			ssh.Password(host.Password),
+			ssh.Password(password),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	client, err := ssh.Dial("tcp", host.Hostname+":22", config)
+	client, err := ssh.Dial("tcp", hostname+":22", config)
 	if err != nil {
 		return nil, err
 	}
-	return &Handler{client: client, host: host}, nil
-}
-
-func (h Handler) GetHost() inventory.Host {
-	return h.host
+	return &Handler{client: client}, nil
 }
 
 // Send opens a new session to the SSH server and sends the passed string.

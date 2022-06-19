@@ -6,20 +6,21 @@ import (
 	"github.com/dyntek-services-inc/goconfigure/inventory"
 	"github.com/dyntek-services-inc/goconfigure/render"
 	"github.com/dyntek-services-inc/goconfigure/ssh"
+	"log"
 	"strings"
 	"testing"
 )
 
 func TestConnectHandler(t *testing.T) {
-	inv, err := inventory.LoadInventory("secrets/hosts.yml")
+	inv, err := inventory.LoadFromYAML("secrets/hosts.yml")
 	if err != nil {
 		panic(err)
 	}
 	// Connect to Hosts
 	var handlers []*ssh.Handler
-	for name, host := range inv {
-		t.Logf("Connectiong to %s", name)
-		h, err := ssh.Connect(host)
+	for _, host := range inv.Hosts {
+		t.Logf("Connectiong to %s", host.Hostname)
+		h, err := ssh.Connect(host.GetLogin())
 		handlers = append(handlers, h)
 		if err != nil {
 			panic(err)
@@ -27,20 +28,22 @@ func TestConnectHandler(t *testing.T) {
 	}
 	// Cleanup
 	for _, h := range handlers {
-		h.Close()
+		if err := h.Close(); err != nil {
+			log.Fatal("handlers failed to close properly", err)
+		}
 	}
 }
 
 func TestSendHandler(t *testing.T) {
-	inv, err := inventory.LoadInventory("secrets/hosts.yml")
+	inv, err := inventory.LoadFromYAML("secrets/hosts.yml")
 	if err != nil {
 		panic(err)
 	}
 	// Connect to Hosts
 	var handlers []*ssh.Handler
-	for name, host := range inv {
-		t.Logf("Connectiong to %s", name)
-		h, err := ssh.Connect(host)
+	for _, host := range inv.Hosts {
+		t.Logf("Connectiong to %s", host.Hostname)
+		h, err := ssh.Connect(host.GetLogin())
 		handlers = append(handlers, h)
 		if err != nil {
 			panic(err)
@@ -61,12 +64,14 @@ func TestSendHandler(t *testing.T) {
 	}
 	// Cleanup
 	for _, h := range handlers {
-		h.Close()
+		if err := h.Close(); err != nil {
+			log.Fatal("handlers failed to close properly", err)
+		}
 	}
 }
 
 func TestMultiSendHandler(t *testing.T) {
-	inv, err := inventory.LoadInventory("secrets/hosts.yml")
+	inv, err := inventory.LoadFromYAML("secrets/hosts.yml")
 	tplString, err := render.FileToString("secrets/example.txt")
 	if err != nil {
 		panic(err)
@@ -74,9 +79,9 @@ func TestMultiSendHandler(t *testing.T) {
 	// Connect to Hosts and Render Template
 	var handlers []*ssh.Handler
 	var tpls [][]string
-	for name, host := range inv {
-		t.Logf("Connectiong to %s", name)
-		h, err := ssh.Connect(host)
+	for _, host := range inv.Hosts {
+		t.Logf("Connectiong to %s", host.Hostname)
+		h, err := ssh.Connect(host.GetLogin())
 		if err != nil {
 			panic(err)
 		}
@@ -101,6 +106,8 @@ func TestMultiSendHandler(t *testing.T) {
 	}
 	// Cleanup
 	for _, h := range handlers {
-		h.Close()
+		if err := h.Close(); err != nil {
+			log.Fatal("handlers failed to close properly", err)
+		}
 	}
 }
