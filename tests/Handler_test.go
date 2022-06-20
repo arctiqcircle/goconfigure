@@ -144,7 +144,7 @@ func TestTemplateHandler(t *testing.T) {
 			panic(err)
 		}
 		handlers = append(handlers, h)
-		tpls = append(tpls, render.RenderCommands(host.Data, tplString))
+		tpls = append(tpls, render.Commands(host.Data, tplString))
 	}
 	// Send Commands to Host
 	for i, h := range handlers {
@@ -177,7 +177,7 @@ func TestTemplateHandler(t *testing.T) {
 			panic(err)
 		}
 		handlers = append(handlers, h)
-		tpls = append(tpls, render.RenderCommands(host.Data, tplString))
+		tpls = append(tpls, render.Commands(host.Data, tplString))
 	}
 	// Send Commands to Host
 	for i, h := range handlers {

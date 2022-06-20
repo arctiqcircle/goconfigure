@@ -11,6 +11,7 @@ import (
 	"github.com/dyntek-services-inc/goconfigure/render"
 	"log"
 	"os"
+	"strings"
 )
 
 var pwd, pwdErr = os.Getwd()
@@ -30,16 +31,28 @@ func main() {
 			// One of the flags was passed but not the other
 			log.Fatal("one flag was passed, but not both")
 		} else {
-			// Both flags were passed, begin deployment
-			inv, err := inventory.LoadFromYAML(*invFilename)
+			// Both flags were passed, begin loading
+			var inv *inventory.Inventory
+			var err error
+			if strings.HasSuffix(*invFilename, ".csv") {
+				// The passed inventory file was a CSV
+				inv, err = inventory.LoadFromCSV(*invFilename)
+			} else if strings.HasSuffix(*invFilename, ".yml") || strings.HasSuffix(*invFilename, ".yaml") {
+				inv, err = inventory.LoadFromYAML(*invFilename)
+			} else {
+				log.Fatal("the passed inventory file is not of type CSV or YAML")
+			}
 			if err != nil {
 				log.Fatal(err)
 			}
+			// Begin loading the template
 			tplString, err := render.FileToString(*tplFilename)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if err := client.Deploy(inv, tplString, pwd); err != nil {
+			// Begin the deployment
+			deployment := client.NewDeployment(tplString, pwd)
+			if err := deployment.Deploy(inv); err != nil {
 				log.Fatal(err)
 			}
 		}
