@@ -3,9 +3,9 @@ package tests
 import (
 	"errors"
 	"fmt"
+	"github.com/dyntek-services-inc/goconfigure/client"
 	"github.com/dyntek-services-inc/goconfigure/inventory"
 	"github.com/dyntek-services-inc/goconfigure/render"
-	"github.com/dyntek-services-inc/goconfigure/ssh"
 	"log"
 	"strings"
 	"testing"
@@ -16,11 +16,11 @@ func TestConnectHandler(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	// Connect to Hosts
-	var handlers []*ssh.Handler
+	// BasicConnect to Hosts
+	var handlers []client.Handler
 	for _, host := range inv.Hosts {
 		t.Logf("Connectiong to %s", host.Hostname)
-		h, err := ssh.Connect(host.GetLogin())
+		h, err := client.BasicConnect(host)
 		handlers = append(handlers, h)
 		if err != nil {
 			panic(err)
@@ -39,11 +39,11 @@ func TestSendHandler(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	// Connect to Hosts
-	var handlers []*ssh.Handler
+	// BasicConnect to Hosts
+	var handlers []client.Handler
 	for _, host := range inv.Hosts {
 		t.Logf("Connectiong to %s", host.Hostname)
-		h, err := ssh.Connect(host.GetLogin())
+		h, err := client.BasicConnect(host)
 		handlers = append(handlers, h)
 		if err != nil {
 			panic(err)
@@ -76,12 +76,12 @@ func TestMultiSendHandler(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	// Connect to Hosts and Render Template
-	var handlers []*ssh.Handler
+	// BasicConnect to Hosts and Render Template
+	var handlers []client.Handler
 	var tpls [][]string
 	for _, host := range inv.Hosts {
 		t.Logf("Connectiong to %s", host.Hostname)
-		h, err := ssh.Connect(host.GetLogin())
+		h, err := client.BasicConnect(host)
 		if err != nil {
 			panic(err)
 		}
@@ -97,12 +97,12 @@ func TestMultiSendHandler(t *testing.T) {
 			}
 			response = strings.TrimSpace(response)
 			fmt.Println(response)
+			if response != fmt.Sprintf("hello %s!") {
+				panic(errors.New(fmt.Sprintf("response %s not equal to %s", response, "hello world!")))
+			} else {
+				t.Logf("response %s succesfully matches %s", response, "hello world!")
+			}
 		}
-		//if response != "hello world!" {
-		//	panic(errors.New(fmt.Sprintf("response %s not equal to %s", response, "hello world!")))
-		//} else {
-		//	t.Logf("response %s succesfully matches %s", response, "hello world!")
-		//}
 	}
 	// Cleanup
 	for _, h := range handlers {

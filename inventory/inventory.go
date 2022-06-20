@@ -4,14 +4,9 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"github.com/dyntek-services-inc/goconfigure/render"
-	"github.com/dyntek-services-inc/goconfigure/ssh"
 	"gopkg.in/yaml.v3"
 	"io"
-	"log"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 type Inventory struct {
@@ -61,9 +56,8 @@ func LoadFromCSV(path string) (*Inventory, error) {
 	for i, field := range hrec {
 		headers[i] = field
 	}
-	// TODO: convert to a string builder to handle larger documents
 	for {
-		host := Host{}
+		host := Host{Data: make(map[string]interface{})}
 		rec, err := reader.Read()
 		if err != nil {
 			if err == io.EOF {
@@ -93,53 +87,7 @@ func LoadFromCSV(path string) (*Inventory, error) {
 		if len(host.Password) == 0 {
 			return nil, errors.New(fmt.Sprintf("inventory file %s does not contain password field", path))
 		}
+		inv.Hosts = append(inv.Hosts, host)
 	}
 	return &inv, nil
-}
-
-func (inv *Inventory) Deploy(tplString, logDir string) error {
-	rc := make([]chan []string, len(inv.Hosts)) // The response channels.
-	for ih, host := range inv.Hosts {
-		log.Printf("starting deployment for %s", host.Hostname)
-		rc[ih] = make(chan []string)
-		handler, err := ssh.Connect(host.Hostname, host.Username, host.Password)
-		log.Printf("finished connecting too %s", host.Hostname)
-		if err != nil {
-			return err
-		}
-		go func(ro chan []string, hdlr *ssh.Handler, host Host) {
-			rtplc := render.RenderCommands(host.Data, tplString)
-			cc := make([]chan string, len(rtplc))
-			for i, c := range rtplc {
-				cc[i] = make(chan string)
-				go func(co chan string, ci string) {
-					r, err := hdlr.Send(ci)
-					if err != nil {
-						log.Fatal(err)
-					}
-					co <- r
-				}(cc[i], c)
-			}
-			cco := make([]string, len(rtplc))
-			for i, co := range cc {
-				cco[i] = <-co
-			}
-			log.Printf("finished deployment of %s", host.Hostname)
-			ro <- cco
-		}(rc[ih], handler, host)
-	}
-	for ri, ro := range rc {
-		rro := <-ro
-		tr := strings.Join(rro, "\n")
-		of := filepath.Join(logDir, inv.Hosts[ri].Hostname)
-		log.Printf("writing output to %s.txt", of)
-		if err := os.WriteFile(of+".txt", []byte(tr), 0666); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (h *Host) GetLogin() (string, string, string) {
-	return h.Hostname, h.Username, h.Password
 }

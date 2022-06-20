@@ -6,6 +6,7 @@ package main
 
 import (
 	"flag"
+	"github.com/dyntek-services-inc/goconfigure/client"
 	"github.com/dyntek-services-inc/goconfigure/inventory"
 	"github.com/dyntek-services-inc/goconfigure/render"
 	"log"
@@ -38,7 +39,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			if err := inv.Deploy(tplString, pwd); err != nil {
+			if err := client.Deploy(inv, tplString, pwd); err != nil {
 				log.Fatal(err)
 			}
 		}
