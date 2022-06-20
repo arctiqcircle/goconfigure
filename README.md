@@ -10,7 +10,7 @@ entered manually. Interactive mode does **not** support configuration templating
 
 Optional arguments include `-i inventory_filename` and `-t template_filename`. The template
 should be defined in a plain-text document and the inventory filename should be defined in a
-YAML, CSV, or JSON formatted document. YAML and JSON should be supplied  according to the
+YAML or CSV formatted document. YAML should be supplied  according to the
 following schema;
 
 ```yaml
@@ -56,7 +56,6 @@ get us to release v1.0.0.
 - ~~Basic user/pass authentication~~.
 - Key based authentication.
 - ~~Implement YAML Inventories~~.
-- Implement JSON Inventories.
 - ~~Implement CSV Inventories~~.
 - Implement interactive operation.
 - Index responses by command.
