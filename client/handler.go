@@ -1,4 +1,4 @@
-package ssh
+package client
 
 import (
 	"bytes"
@@ -6,12 +6,16 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-type Handler struct {
-	host   inventory.Host
+type Handler interface {
+	Send(string) (string, error)
+	Close() error
+}
+
+type SSHHandler struct {
 	client *ssh.Client
 }
 
-func Connect(host inventory.Host) (*Handler, error) {
+func BasicConnect(host inventory.Host) (Handler, error) {
 	config := &ssh.ClientConfig{
 		User: host.Username,
 		Auth: []ssh.AuthMethod{
@@ -23,16 +27,12 @@ func Connect(host inventory.Host) (*Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Handler{client: client, host: host}, nil
-}
-
-func (h Handler) GetHost() inventory.Host {
-	return h.host
+	return &SSHHandler{client: client}, nil
 }
 
 // Send opens a new session to the SSH server and sends the passed string.
 // The standard output from the server is returned.
-func (h Handler) Send(command string) (string, error) {
+func (h *SSHHandler) Send(command string) (string, error) {
 	session, err := h.client.NewSession()
 	if err != nil {
 		return "", err
@@ -40,10 +40,12 @@ func (h Handler) Send(command string) (string, error) {
 	defer session.Close()
 	var outBuffer bytes.Buffer
 	session.Stdout = &outBuffer
-	session.Run(command)
+	if err := session.Run(command); err != nil {
+		return "", err
+	}
 	return outBuffer.String(), nil
 }
 
-func (h Handler) Close() error {
+func (h *SSHHandler) Close() error {
 	return h.client.Close()
 }
