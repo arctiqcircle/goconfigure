@@ -4,9 +4,7 @@
 
 ## Operation
 
-GoConfigure can be run at the command-line with `goconfigure`. Running `goconfigure` without
-any arguments will launch an interactive session where target devices and commands can be
-entered manually. Interactive mode does **not** support configuration templating.
+### Inventory and Templating
 
 Optional arguments include `-i inventory_filename` and `-t template_filename`. The template
 should be defined in a plain-text document and the inventory filename should be defined in a
@@ -48,13 +46,19 @@ server1.domain.com,User@domain.com,Password1,"hello server1!"
 server2.domain.com,User@domain.com,Password1,"hello server2!"
 ```
 
+### Key Based Authentication
+
+If your hosts have a valid public key installed, you can use a PEM encoded key for authentication.
+The key file can be passed to `goconfigure` with the `-k key_filename` flag. Password
+authentication will be tried if key based authentication fails.
+
 ## Roadmap
 
 The following is a roadmap of features to be added. Completing all the following will
 get us to release v1.0.0.
 
 - ~~Basic user/pass authentication~~.
-- Key based authentication.
+- ~~Key based authentication~~.
 - ~~Implement YAML Inventories~~.
 - ~~Implement CSV Inventories~~.
 - Implement interactive operation.

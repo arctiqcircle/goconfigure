@@ -38,7 +38,7 @@ func LoadFromYAML(filename string) (*Inventory, error) {
 	return &inv, nil
 }
 
-func LoadFromCSV(path string) (*Inventory, error) {
+func LoadFromCSV(path string, panicOnEmpty bool) (*Inventory, error) {
 	inv := Inventory{}
 	file, err := os.Open(path)
 	if err != nil {
@@ -84,8 +84,10 @@ func LoadFromCSV(path string) (*Inventory, error) {
 		if len(host.Username) == 0 {
 			return nil, errors.New(fmt.Sprintf("inventory file %s does not contain username field", path))
 		}
-		if len(host.Password) == 0 {
-			return nil, errors.New(fmt.Sprintf("inventory file %s does not contain password field", path))
+		if panicOnEmpty {
+			if len(host.Password) == 0 {
+				return nil, errors.New(fmt.Sprintf("inventory file %s does not contain password field", path))
+			}
 		}
 		inv.Hosts = append(inv.Hosts, host)
 	}
