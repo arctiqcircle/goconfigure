@@ -22,6 +22,7 @@ func main() {
 	}
 	invFilename := flag.String("i", "", "inventory filename")
 	tplFilename := flag.String("t", "", "template filename")
+	keyFilename := flag.String("k", "", "PEM key filename")
 	flag.Parse()
 	if len(*invFilename) == 0 && len(*tplFilename) == 0 {
 		// No inventory or template flags were passed, start manual mode
@@ -50,9 +51,21 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+			// Determine authentication method
+			var auth client.Authentication
+			if len(*keyFilename) == 0 {
+				// No auth key was passed, use Basic
+				auth, err = client.BasicConnect()
+			} else {
+				// an auth key was provided, use Key
+				auth, err = client.KeyConnect(*keyFilename)
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
 			// Begin the deployment
 			deployment := client.NewDeployment(tplString, pwd)
-			if err := deployment.Deploy(inv); err != nil {
+			if err := deployment.Deploy(inv, auth); err != nil {
 				log.Fatal(err)
 			}
 		}

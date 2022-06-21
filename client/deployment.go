@@ -21,16 +21,16 @@ func NewDeployment(template, loggingDir string) Deployment {
 	}
 }
 
-func (d *Deployment) Deploy(inv *inventory.Inventory) error {
+func (d *Deployment) Deploy(inv *inventory.Inventory, auth Authentication) error {
 	rc := make([]chan []string, len(inv.Hosts)) // The response channels.
 	for ih, host := range inv.Hosts {
 		log.Printf("starting deployment for %s", host.Hostname)
 		rc[ih] = make(chan []string)
-		handler, err := BasicConnect(host)
-		log.Printf("finished connecting to %s", host.Hostname)
+		handler, err := auth(host)
 		if err != nil {
 			return err
 		}
+		log.Printf("finished connecting to %s", host.Hostname)
 		go func(ro chan []string, h Handler, host inventory.Host) {
 			rtplc := render.Commands(host.Data, d.template)
 			cc := make([]chan string, len(rtplc))
