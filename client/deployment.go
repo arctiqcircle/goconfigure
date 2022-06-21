@@ -9,7 +9,19 @@ import (
 	"strings"
 )
 
-func Deploy(inv *inventory.Inventory, tplString, logDir string) error {
+type Deployment struct {
+	template         string
+	loggingDirectory string
+}
+
+func NewDeployment(template, loggingDir string) Deployment {
+	return Deployment{
+		template:         template,
+		loggingDirectory: loggingDir,
+	}
+}
+
+func (d *Deployment) Deploy(inv *inventory.Inventory) error {
 	rc := make([]chan []string, len(inv.Hosts)) // The response channels.
 	for ih, host := range inv.Hosts {
 		log.Printf("starting deployment for %s", host.Hostname)
@@ -20,7 +32,7 @@ func Deploy(inv *inventory.Inventory, tplString, logDir string) error {
 			return err
 		}
 		go func(ro chan []string, h Handler, host inventory.Host) {
-			rtplc := render.RenderCommands(host.Data, tplString)
+			rtplc := render.Commands(host.Data, d.template)
 			cc := make([]chan string, len(rtplc))
 			for i, c := range rtplc {
 				cc[i] = make(chan string)
@@ -43,7 +55,7 @@ func Deploy(inv *inventory.Inventory, tplString, logDir string) error {
 	for ri, ro := range rc {
 		rro := <-ro
 		tr := strings.Join(rro, "\n")
-		of := filepath.Join(logDir, inv.Hosts[ri].Hostname)
+		of := filepath.Join(d.loggingDirectory, inv.Hosts[ri].Hostname)
 		log.Printf("writing output to %s.txt", of)
 		if err := os.WriteFile(of+".txt", []byte(tr), 0666); err != nil {
 			return err

@@ -7,7 +7,8 @@ import (
 	"text/template"
 )
 
-// FileToString will accept a render file and return the render as a string.
+// FileToString will accept a template filename and return the template
+// as a string. This is just a convenience function.
 func FileToString(tplFilename string) (string, error) {
 	readBytes, err := os.ReadFile(tplFilename)
 	if err != nil {
@@ -16,7 +17,7 @@ func FileToString(tplFilename string) (string, error) {
 	return string(readBytes), nil
 }
 
-func RenderCommands(data map[string]interface{}, tplString string) []string {
+func Commands(data map[string]interface{}, tplString string) []string {
 	tpl := template.Must(template.New("").Parse(tplString))
 	var tplBuffer bytes.Buffer
 	tpl.Execute(&tplBuffer, data)
