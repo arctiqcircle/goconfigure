@@ -37,7 +37,8 @@ func main() {
 			var err error
 			if strings.HasSuffix(*invFilename, ".csv") {
 				// The passed inventory file was a CSV
-				inv, err = inventory.LoadFromCSV(*invFilename)
+				// If a keyfile was provided passwords are not required in the CSV
+				inv, err = inventory.LoadFromCSV(*invFilename, len(*keyFilename) == 0)
 			} else if strings.HasSuffix(*invFilename, ".yml") || strings.HasSuffix(*invFilename, ".yaml") {
 				inv, err = inventory.LoadFromYAML(*invFilename)
 			} else {
